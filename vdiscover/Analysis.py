@@ -19,7 +19,7 @@ Copyright 2014 by G.Grieco
 
 from math import ceil
 
-from Types import Type
+from vdiscover.Types import Type
 from ptrace.error import PtraceError
 
 

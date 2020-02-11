@@ -40,13 +40,13 @@ from ptrace.debugger import ChildError
 
 from time import sleep
 
-from Event import Exit, Abort, Timeout, Crash, Signal, Call, specs, hash_events
+from vdiscover.Event import Exit, Abort, Timeout, Crash, Signal, Call, specs, hash_events
 
-from Vulnerabilities import detect_vulnerabilities
-from ELF import ELF
-from Run import Launch
-from MemoryMap import MemoryMaps
-from Alarm import alarm_handler, TimeoutEx
+from vdiscover.Vulnerabilities import detect_vulnerabilities
+from vdiscover.ELF import ELF
+from vdiscover.Run import Launch
+from vdiscover.MemoryMap import MemoryMaps
+from vdiscover.Alarm import alarm_handler, TimeoutEx
 
 
 class Process(Application):
@@ -85,7 +85,7 @@ class Process(Application):
         self.elf = ELF(self.program, plt=False)
 
         # if self.elf.GetType() <> "ELF 32-bit":
-        #  print "Only ELF 32-bit are supported to be executed."
+        #  print("Only ELF 32-bit are supported to be executed.")
         #  exit(-1)
 
         self.modules = dict()
@@ -99,13 +99,13 @@ class Process(Application):
         self.binfo = dict()
 
     def setBreakpoints(self, elf):
-        # print elf.GetFunctions()
+        # print(elf.GetFunctions())
         for func_name in elf.GetFunctions():
-            # print "func_name", elf.GetModname(),
+            # print("func_name", elf.GetModname(),)
             # hex(elf.FindFuncInPlt(func_name))
 
             if func_name in specs:
-                # print "func_name in spec",elf.GetModname(), func_name,
+                # print("func_name in spec",elf.GetModname(), func_name,)
                 # hex(elf.FindFuncInPlt(func_name))
                 addr = elf.FindFuncInPlt(func_name)
                 self.binfo[addr] = elf.GetModname(), func_name
@@ -125,11 +125,11 @@ class Process(Application):
                 # Go before "INT 3" instruction
                 ip -= 1
             breakpoint = self.process.findBreakpoint(ip)
-            # print "breakpoint @",hex(ip)
+            # print("breakpoint @",hex(ip))
 
             if breakpoint:
                 module, name = self.findBreakpointInfo(breakpoint.address)
-                # print module, name, hex(ip)
+                # print(module, name, hex(ip))
 
                 if ip == self.elf.GetEntrypoint():
                     breakpoint.desinstall(set_ip=True)
@@ -138,7 +138,7 @@ class Process(Application):
                     self.mm = MemoryMaps(self.program, self.pid)
                     # self.setBreakpoints(self.elf)
 
-                    # print self.mm
+                    # print(self.mm)
 
                     for (range, mod, atts) in self.mm.items():
                         if '/' in mod and 'x' in atts and not ("libc-" in mod):
@@ -156,7 +156,7 @@ class Process(Application):
 
                                     if not (mod in self.modules):
                                         self.modules[mod] = ELF(mod, base=base)
-                                    # print "hooking", mod, hex(base)
+                                    # print("hooking", mod, hex(base))
 
                                     self.setBreakpoints(self.modules[mod])
 
@@ -168,7 +168,7 @@ class Process(Application):
                 else:
                     call = Call(name, module)
                     # self.mm.update()
-                    # print "updated mm"
+                    # print("updated mm")
                     call.detect_parameters(self.process, self.mm)
                     breakpoint.desinstall(set_ip=True)
 
@@ -185,15 +185,15 @@ class Process(Application):
                             self.nevents[(ip_, name_)] = n - 1
                         elif n == self.min_events + 1:
                             self.nevents[(ip_, name_)] = self.min_events
-                            # print "restoring!", (ip, name)
+                            # print("restoring!", (ip, name))
                             self.breakpoint(call_ip)
 
                     if n < self.max_events:
                         self.breakpoint(call_ip)
                     # else:
-                        # print "disabled!", (ip, name)
+                        # print("disabled!", (ip, name))
 
-                    # print "call detected!"
+                    # print("call detected!")
                     return [call]
 
         elif signal.signum == SIGABRT:
@@ -247,7 +247,7 @@ class Process(Application):
             return []  # User generated, ignore.
 
         else:
-            print "I don't know what to do with this signal:", str(signal)
+            print("I don't know what to do with this signal:", str(signal))
             assert(False)
 
         return []
@@ -262,10 +262,10 @@ class Process(Application):
         is_attached = True
 
         try:
-            # print "initial processes:"
+            # print("initial processes:")
             # for p in self.debugger:
-            #  print "p:", p
-            # print "end processes"
+            #  print("p:", p)
+            # print("end processes")
             return self.debugger.addProcess(self.pid, is_attached=is_attached)
         except (ProcessExit, PtraceError) as err:
             if isinstance(err, PtraceError) \
@@ -309,7 +309,7 @@ class Process(Application):
         events = self.createEvents(signal)
 
         #vulns = self.DetectVulnerabilities(self.events, events)
-        # print "vulns detected"
+        # print("vulns detected")
         self.events = self.events + events  # + vulns
         #self.nevents = self.nevents + len(events)
 
@@ -339,7 +339,7 @@ class Process(Application):
 
     def runProcess(self, cmd):
 
-        # print "Running", cmd
+        # print("Running", cmd)
 
         signal(SIGALRM, alarm_handler)
 
@@ -355,19 +355,19 @@ class Process(Application):
             self.process = self.createProcess(cmd, self.envs, self.no_stdout)
             self.process.no_frame_pointer = self.elf.no_frame_pointer
             #self.mm  = MemoryMaps(self.program, self.pid)
-            # print self.mm
+            # print(self.mm)
             self.crashed = False
         except ChildError as err:
-            print "a"
+            print("a")
             writeError(getLogger(), err, "Unable to create child process")
             return
         except OSError as err:
-            print "b"
+            print("b")
             writeError(getLogger(), err, "Unable to create child process")
             return
 
         except IOError as err:
-            print "c"
+            print("c")
             writeError(getLogger(), err, "Unable to create child process")
             return
 
@@ -376,7 +376,7 @@ class Process(Application):
 
         # Set the breakpoints
         self.breakpoint(self.elf.GetEntrypoint())
-        # print hex(self.elf.GetEntrypoint())
+        # print(hex(self.elf.GetEntrypoint()))
 
         try:
             while True:
@@ -396,8 +396,8 @@ class Process(Application):
 
             # alarm(0)
         # except PtraceError:
-            # print "deb:",self.debugger, "crash:", self.crashed
-            # print "PtraceError"
+            # print("deb:",self.debugger, "crash:", self.crashed)
+            # print("PtraceError")
             # alarm(0)
             # return
 
@@ -428,10 +428,10 @@ class Process(Application):
         self.debugger = PtraceDebugger()
 
         self.runProcess([self.program] + inputs)
-        # print self.pid
+        # print(self.pid)
 
         # if self.crashed:
-        #  print "we should terminate.."
+        #  print("we should terminate..")
         # sleep(3)
 
         if self.process is None:
@@ -439,7 +439,7 @@ class Process(Application):
 
         self.process.terminate()
         self.process.detach()
-        # print self.nevents
+        # print(self.nevents)
 
         self.process = None
         return self.events

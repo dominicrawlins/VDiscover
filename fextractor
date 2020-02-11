@@ -24,6 +24,7 @@ import argparse
 import csv
 import sys
 import random
+import pkg_resources
 
 from vdiscover.Detection import GetArgs, GetFiles, GetCmd
 
@@ -77,7 +78,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--out-file",
                         help="File to output the extracted features",
-                        type=str, default="/dev/stdout")
+                        type=str, default=sys.stdout)
 
     parser.add_argument(
         "--max-subtraces-collected",
@@ -136,7 +137,7 @@ if __name__ == "__main__":
 
     if (not static_only and not dynamic_only) or (
             static_only and dynamic_only):
-        print "The feature extraction requires to select either static of dynamic features exclusively"
+        print("The feature extraction requires to select either static of dynamic features exclusively")
         exit(-1)
 
     max_subtraces_collected = options.max_subtraces_collected
@@ -157,7 +158,8 @@ if __name__ == "__main__":
 
     csvfile = options.out_file
 
-    os.chdir(testcase)
+
+    os.chdir(os.path.join(os.path.dirname(__file__), "../../examples/testcases/", testcase))
     program = GetCmd(None)
 
     if static_only:
@@ -185,11 +187,11 @@ if __name__ == "__main__":
         prt = TypePrinter(csvfile, testcase, mclass)
 
         # unchanged input
-        null_mutt, original_input = original_inputs.next()
+        null_mutt, original_input = next(original_inputs)
         original_events = app.getData(prepare_inputs(original_input))
 
         if original_events is None:
-            print "Execution of", program, "failed!"
+            print("Execution of", program, "failed!")
             exit(-1)
 
         prt.print_events(program, original_events)

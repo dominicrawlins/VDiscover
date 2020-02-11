@@ -4,7 +4,7 @@ from setuptools import setup
 setup(
     name='VDiscover',
     version='0.1',
-    packages=['vdiscover'],
+    packages=['vdiscover', 'examples'],
     include_package_data=True,
     license='GPL3',
     description='A tool to predict the existence of vulnerabilities in testcases',

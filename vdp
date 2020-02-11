@@ -93,7 +93,7 @@ if __name__ == "__main__":
     prepared_inputs = prepare_inputs(original_input)
 
     if show_cmd:
-        print vdp_cmd, program, " ".join(prepared_inputs)
+        print(vdp_cmd, program, " ".join(prepared_inputs))
         exit(0)
 
     if io_mode:
@@ -121,7 +121,7 @@ if __name__ == "__main__":
             p.communicate()
 
             if p.returncode < 0:
-                print >> sys.stderr, testcase, p.returncode, seed
+                print(>> sys.stderr, testcase, p.returncode, seed)
                 exit(1)
 
         exit(0)

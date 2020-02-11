@@ -21,15 +21,15 @@ import sys
 import csv
 import copy
 
-from Event import Call, Crash, Abort, Exit, Timeout, Signal, Vulnerability, specs
-from Types import ptypes, isPtr, isNum, ptr32_ptypes, num32_ptypes, generic_ptypes
+from vdiscover.Event import Call, Crash, Abort, Exit, Timeout, Signal, Vulnerability, specs
+from vdiscover.Types import ptypes, isPtr, isNum, ptr32_ptypes, num32_ptypes, generic_ptypes
 
 
 class TypePrinter:
 
     def __init__(self, filename, pname, mclass):
         self.tests = set()
-        self.outfile = open(filename, "a+")
+        self.outfile = open(filename, "a+") if isinstance(filename, str) else filename
         self.pname = pname
         self.mclass = mclass
         self.csvwriter = csv.writer(self.outfile, delimiter='\t')

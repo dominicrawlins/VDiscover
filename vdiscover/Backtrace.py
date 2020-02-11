@@ -81,8 +81,8 @@ def getBacktrace(process, max_args=6, max_depth=20):
         # Create frame
         frame = getBacktraceFrame(process, ip, fp, nargs)
 
-        # print frame
-        # print hex(fp),hex(nextfp), hex(nargs)
+        # print(frame)
+        # print(hex(fp),hex(nextfp), hex(nargs))
         backtrace.append(frame)
 
         # End of the stack?

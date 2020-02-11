@@ -20,10 +20,10 @@ Copyright 2014 by G.Grieco
 from ptrace.cpu_info import (CPU_POWERPC, CPU_INTEL, CPU_X86_64, CPU_I386)
 from ptrace.ctypes_tools import bytes2word
 
-from Spec import specs
-from Types import Type, GetPtype
-from Analysis import FindModule, RefinePType
-from Backtrace import getBacktrace, Backtrace
+from vdiscover.Spec import specs
+from vdiscover.Types import Type, GetPtype
+from vdiscover.Analysis import FindModule, RefinePType
+from vdiscover.Backtrace import getBacktrace, Backtrace
 
 #from distorm import Decode, Decode32Bits
 
@@ -67,7 +67,7 @@ class Call(Event):
         reg = ["rdi", "rsi", "rdx", "rcx", "r8"][index]
         val = self.process.getreg(reg)
 
-        # print "bs value", repr(bs), hex(bytes2word(bs))
+        # print("bs value", repr(bs), hex(bytes2word(bs)))
 
         return RefinePType(GetPtype(ptype), val, self.process, self.mm)
 
@@ -78,7 +78,7 @@ class Call(Event):
         # if CPU_X86_64:
         #  bs = bs + (4*'\00')
 
-        # print "bs value", repr(bs), hex(bytes2word(bs))
+        # print("bs value", repr(bs), hex(bytes2word(bs)))
 
         return RefinePType(
             GetPtype(ptype),
@@ -93,11 +93,9 @@ class Call(Event):
         self.process = process
         self.mm = mm
         self.retaddr = None
-        # print  "ret_addr:", str(self.retaddr[0]), hex(self.retaddr[1])
+        # print ("ret_addr:", str(self.retaddr[0]), hex(self.retaddr[1]))
 
         offset = 4
-        # print self.mm
-        # print self.name
         for index, ctype in enumerate(self.param_types):
 
             if CPU_X86_64:
@@ -108,7 +106,7 @@ class Call(Event):
             self.param_values.append(value)
             self.param_ptypes.append(ptype)
             offset += ptype.getSize()
-            #print (str(ptype), hex(value))
+            #print(str(ptype), hex(value))
 
     # def DetectReturnValue(self, process):
     #  self.process = process
@@ -130,7 +128,7 @@ class Signal(Event):
         if hasattr(_sifields, "_sigfault") and self.name == "SIGSEGV":
             self.fields["addr"] = RefinePType(
                 Type("Ptr32", 4), _sifields._sigfault._addr, process, mm)
-            # print "sigfault @",  _sifields._sigfault._addr
+            # print("sigfault @",  _sifields._sigfault._addr)
 
     def __str__(self):
         return str(self.name)
@@ -177,7 +175,7 @@ class Abort(Event):
 
         self.bt = process.getBacktrace(max_args=0, max_depth=20)
         self.module = FindModule(ip, mm)
-        # print self.bt, type(self.bt)
+        # print(self.bt, type(self.bt))
         frames = []
 
         if CPU_X86_64:
@@ -194,8 +192,8 @@ class Abort(Event):
                     break
 
         self.bt.frames = frames
-        # print "frames",frames
-        # print "self.bt.frames", self.bt.frames
+        # print("frames",frames)
+        # print("self.bt.frames", self.bt.frames)
 
         self.eip = RefinePType(Type("Ptr32", 4), ip, process, mm)
 
@@ -228,7 +226,7 @@ class Crash(Event):
         self.module = FindModule(ip, mm)
 
         self.fp_type = RefinePType(Type("Ptr32", 4), fp, process, mm)
-        # print "fp:",hex(fp_type[1]), str(fp_type[0])
+        # print("fp:",hex(fp_type[1]), str(fp_type[0]))
         if not process.no_frame_pointer:  # str(self.fp_type[0]) == "SPtr32":
             self.bt = getBacktrace(process, max_args=0, max_depth=20)
         else:
@@ -242,10 +240,10 @@ class Crash(Event):
         if CPU_I386:
 
             for i, frame in enumerate(self.bt.frames):
-                print "frame", frame, hex(frame.ip)
+                print("frame", frame, hex(frame.ip))
                 r_type = RefinePType(Type("Ptr32", 4), frame.ip, process, mm)
                 frames.append(r_type)
-                # print "ip:", str(r_type[0])
+                # print(ip:", str(r_type[0]))
                 if not (str(r_type[0]) == "GxPtr32"):
                     break
 

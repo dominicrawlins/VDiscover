@@ -22,7 +22,7 @@ import copy
 
 from subprocess import Popen, PIPE, STDOUT
 
-import Input
+from vdiscover.Input import Arg, File
 
 
 def opened_files(program, args, files, timeout=5):
@@ -43,12 +43,12 @@ def opened_files(program, args, files, timeout=5):
 
     for mfile in files:
         filename = mfile.filename
-        # print "checking",filename
+        # print("checking",filename)
         if 'open("' + filename in output[1]:
             return True
 
     return False
-    # print output
+
 
 
 def fuzz_cmd(prepared_inputs, fuzzer_cmd, seed):
@@ -121,10 +121,10 @@ class Mutator:
         self.input = input.copy()
         self.input_len = len(input)
 
-        if isinstance(input, Input.Arg):
-            self.array = map(chr, range(1, 256))
-        elif isinstance(input, Input.File):
-            self.array = map(chr, range(0, 256))
+        if isinstance(input, Arg):
+            self.array = list(map(chr, range(1, 256)))
+        elif isinstance(input, File):
+            self.array = list(map(chr, range(0, 256)))
 
         self.array_len = len(self.array)
 
@@ -147,7 +147,7 @@ class RandomExpanderMutator(Mutator):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
 
         assert(self.input_len > 0)
 
@@ -159,7 +159,7 @@ class RandomExpanderMutator(Mutator):
         j = random.randrange(self.max_expansion)
         m = self.array[random.randrange(self.array_len)]
 
-        # print self.array[rand]
+        # print(self.array[rand])
         input.data = input.data[:i] + m * j + input.data[i + 1:]
 
         rpos = int(i / (float(self.input_len)) * 100.0)
@@ -181,7 +181,7 @@ class RandomByteMutator(Mutator):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
 
         assert(self.input_len > 0)
 
@@ -211,7 +211,7 @@ class NullMutator(Mutator):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
 
         input = self.input.copy()
         return input
@@ -230,15 +230,15 @@ class RandomInputMutator:
     def __init__(self, inputs, mutator):
         assert(inputs != [])
         self.i = 0
-        self.inputs = map(mutator, inputs)
+        self.inputs = list(map(mutator, inputs))
         self.inputs_len = len(self.inputs)
-        self.symb_inputs = filter(lambda x: x[1].input.isSymbolic(), enumerate(self.inputs))
+        self.symb_inputs = list(filter(lambda x: x[1].input.isSymbolic(), enumerate(self.inputs)))
         self.symb_inputs_len = len(self.symb_inputs)
 
     def __iter__(self):
         return self
 
-    def next(self, mutate=True):
+    def __next__(self, mutate=True):
         r = []
         delta = None
 
@@ -246,7 +246,7 @@ class RandomInputMutator:
 
         for j, m in enumerate(self.inputs):
             if self.i == j:
-                r.append(m.next())
+                r.append(next(m))
                 #data = input.PrepareData()
                 delta = m.GetDelta()
 

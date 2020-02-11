@@ -128,12 +128,12 @@ def readTraces(train_file, nsamples, cut=None, maxsize=50):
     train_programs = []
     train_classes = []
 
-    # print "Reading and sampling data to train..",
+    # print("Reading and sampling data to train..",)
     if nsamples is None:
         for i, col in enumerate(csvreader):
 
             if len(col) < 2 or len(col) > 3:
-                print "Ignoring line", i, ":", "\t".join(col)
+                print("Ignoring line", i, ":", "\t".join(col))
                 continue
 
             program = col[0]

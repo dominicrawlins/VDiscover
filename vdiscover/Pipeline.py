@@ -214,7 +214,7 @@ def make_cluster_cnn(
         nb_classes,
         weights=None):
 
-    # print mode, max_features, maxlen, embedding_dims, nb_filters,
+    # print(mode, max_features, maxlen, embedding_dims, nb_filters,)
     # filter_length, hidden_dims, nb_classes
     from keras.preprocessing import sequence
     from keras.optimizers import RMSprop
@@ -263,7 +263,7 @@ def make_cluster_cnn(
     # Computing the output shape of a conv layer can be tricky;
     # for a good tutorial, see: http://cs231n.github.io/convolutional-networks/
     output_size = nb_filters * (((maxlen - filter_length) / 1) + 1) / 2
-    # print output_size, hidden_dims
+    # print(output_size, hidden_dims)
 
     # We add a vanilla hidden layer:
     if mode == "train":
@@ -327,7 +327,7 @@ class DeepReprPreprocessor:
                 start = randint(0, max(start, 0))
 
                 new_trace = " ".join(trace[start:(start + self.max_len)])
-                # print "sizes:", size, len(trace[start:(start+self.max_len)])
+                # print("sizes:", size, len(trace[start:(start+self.max_len)]))
 
                 cut_X_data.append(new_trace)
 
@@ -375,11 +375,11 @@ class DeepReprPreprocessor:
                 last_event = trace[(end + 1)].split(":")
                 cut_y_data.append(last_event[0])
             else:
-                # print size
+                # print(size)
                 start = size - (self.max_len) - 2
                 start = randint(0, start)
                 end = start + self.max_len
-                # print len(trace[start:end])
+                # print(len(trace[start:end]))
                 #new_trace = " ".join(trace[start:end])
 
                 #start = randint(0, size-2)
@@ -392,7 +392,7 @@ class DeepReprPreprocessor:
         for y in set(cut_y_data):
             stats[y] = float(cut_y_data.count(y)) / len(cut_y_data)
 
-        print stats, sum(stats.values())
+        print(stats, sum(stats.values()))
         # assert(0)
         cut_y_data = []
         for _ in xrange(cut_size):
@@ -409,11 +409,10 @@ class DeepReprPreprocessor:
                 new_trace = " ".join(trace[start:(end + 1)])
                 last_event = trace[(end + 1)].split(":")
             else:
-                # print size
                 start = size - (self.max_len) - 2
                 start = randint(0, start)
                 end = start + self.max_len
-                # print len(trace[start:end])
+                # print(len(trace[start:end]))
                 #new_trace = " ".join(trace[start:end])
 
                 #start = randint(0, size-2)
@@ -512,7 +511,6 @@ class KerasPreprocessor:
         trace = raw_trace.split(" ")
         size = len(trace)
         cut_X_data = []
-        # print trace
 
         for _ in xrange(sample_size):
 
@@ -527,7 +525,7 @@ class KerasPreprocessor:
 
         X_size = len(X_train)
         X_train = X_train[:(X_size - (X_size % self.batch_size))]
-        # print "X_size", X_size-(X_size % self.batch_size)
+        # print("X_size", X_size-(X_size % self.batch_size))
 
         X_train = sequence.pad_sequences(X_train, maxlen=self.max_len)
         return X_train
@@ -557,7 +555,7 @@ class KerasPredictor:
                 predictions = [0]
 
             avg_predictions = sum(predictions) / 100.0
-            # print predictions, avg_predictions
+            # print(predictions, avg_predictions)
             if avg_predictions > 0.5:
                 X_predictions.append(1)
             else:

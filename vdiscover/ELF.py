@@ -23,7 +23,7 @@ import os
 import os.path
 import subprocess
 
-from Misc import parse_ldd_output, sh_string
+from vdiscover.Misc import parse_ldd_output, sh_string
 
 _READELF = '/usr/bin/readelf'
 _FILE = '/usr/bin/file'
@@ -31,7 +31,7 @@ _OBJDUMP = '/usr/bin/objdump'
 
 
 def die(s):
-    print s
+    print(s)
     exit(-1)
 
 
@@ -49,18 +49,18 @@ datadir = "../cache/"
 
 def _save_cached_data(path, plt, got, base):
     filename = realpath + "/" + datadir + "/" + str(path.replace("/", "_"))
-    csvfile = open(filename + ".plt", 'wb')
+    csvfile = open(filename + ".plt", 'w')
     writer = csv.writer(csvfile, delimiter='\t')
 
     for (name, addr) in plt.items():
         if addr is not None:
-            writer.writerow((name, addr - base))
+            writer.writerow((name, str(addr - base)))
 
-    csvfile = open(filename + ".got", 'wb')
+    csvfile = open(filename + ".got", 'w')
     writer = csv.writer(csvfile, delimiter='\t')
 
     for (name, addr) in got.items():
-        # print "got",name, addr
+        # print("got",name, addr)
         if addr is None:
             addr = 0x0
         writer.writerow((name, addr))
@@ -74,21 +74,21 @@ def _load_cached_data(path, plt, got, base):
 
     filename = realpath + "/" + datadir + "/" + str(path.replace("/", "_"))
 
-    # print filename
+    # print(filename)
     try:
-        csvfile = open(filename + ".plt", 'rb')
+        csvfile = open(filename + ".plt", 'r')
     except IOError:
         return False
-    # print "cached file:",filename+".plt"
+    # print("cached file:",filename+".plt")
 
     reader = csv.reader(csvfile, delimiter='\t')
 
     for (name, addr) in reader:
-        # print name, int(addr)+base
+        # print(name, int(addr)+base)
         plt[name] = int(addr) + base
 
     try:
-        csvfile = open(filename + ".got", 'rb')
+        csvfile = open(filename + ".got", 'r')
     except IOError:
         return False
 
@@ -107,12 +107,10 @@ def plt_got(path, base):
     plt, got = dict(), dict()
 
     if _load_cached_data(path, plt, got, base):
-        # print "plt",plt
-        # print "got",got
         return plt, got
 
     cmd = ["env", "-i", _OBJDUMP, '-d', path]
-    out = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
+    out = str(subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0])
     got32 = '[^j]*jmp\s+\*0x(\S+)'
     got64 = '[^#]*#\s+(\S+)'
     lines = re.findall(
@@ -129,8 +127,6 @@ def plt_got(path, base):
         plt[name] = base + addr
         got[name] = gotaddr
 
-    # print "plt",plt
-    # print "got",got
 
     _save_cached_data(path, plt, got, base)
     return plt, got
@@ -147,12 +143,10 @@ def load_raw_inss(path):
 
 def entrypoint(path):
     cmd = ["env", "-i", _READELF, '-hWS', path]
-    out = subprocess.check_output(cmd)
+    out = str(subprocess.check_output(cmd))
     #elfclass = re.findall('Class:\s*(.*$)', out, re.MULTILINE)[0]
     entrypoint = int(re.findall(
-        'Entry point address:\s*(.*$)', out, re.MULTILINE)[0], 16)
-    # print out
-    # print hex(entrypoint)
+        'Entry point address:\s*(.*$)', out, re.MULTILINE)[0].split("\\")[0], 16)
     if "DYN (Shared object file)" in out:
         entrypoint = entrypoint + 0x80000000
 
@@ -161,8 +155,7 @@ def entrypoint(path):
 
 def no_frame_pointer(path):
     cmd = ["env", "-i", _READELF, '-hWS', path]
-    out = subprocess.check_output(cmd)
-    # print out
+    out = str(subprocess.check_output(cmd))
 
     #elfclass = re.findall('Class:\s*(.*$)', out, re.MULTILINE)[0]
     out = out.split('.eh_frame         PROGBITS        ')[1]
@@ -175,7 +168,7 @@ def file_type(path):
     cmd = [_FILE, os.path.realpath(path)]
 
     try:
-        out = subprocess.check_output(cmd)
+        out = str(subprocess.check_output(cmd))
     except subprocess.CalledProcessError:
         return ""
 
@@ -192,22 +185,21 @@ class ELF:
     cachedir = "cache"
 
     def __init__(self, path, plt=True, base=0x0):
-        # print path, plt
         self.path = str(path)
         self.base = base
         self.sections = dict()
         self.filetype = file_type(path)
 
         if self.filetype == "":
-            print "The executable at", path, "cannot be found"
+            print("The executable at", path, "cannot be found")
             exit(-1)
 
         elif self.filetype is None:
-            print "The executable at", path, "is not a valid ELF file"
+            print("The executable at", path, "is not a valid ELF file")
             exit(-1)
 
         self.entrypoint = entrypoint(path)
-        # print hex(self.entrypoint)
+        # print(hex(self.entrypoint))
         self.no_frame_pointer = no_frame_pointer(path)
         # self._load_sections()
 
@@ -277,7 +269,7 @@ class ELF:
             return None
 
     def FindAddrInPlt(self, addr):
-        # print addr
+
         if addr in self.addr2name:
             return self.addr2name[addr]
         else:
@@ -291,7 +283,7 @@ class ELF:
             return None
 
     def FindAddrInGot(self, addr):
-        # print addr
+
         if addr in self.addr2name:
             return self.func2name[addr]
         else:
