@@ -29,7 +29,7 @@ class TypePrinter:
 
     def __init__(self, filename, pname, mclass):
         self.tests = set()
-        self.outfile = open(filename, "a+")
+        self.outfile = open(filename, "a+") if isinstance(filename, str) else filename
         self.pname = pname
         self.mclass = mclass
         self.csvwriter = csv.writer(self.outfile, delimiter='\t')

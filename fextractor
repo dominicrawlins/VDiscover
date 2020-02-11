@@ -187,7 +187,7 @@ if __name__ == "__main__":
         prt = TypePrinter(csvfile, testcase, mclass)
 
         # unchanged input
-        null_mutt, original_input = original_inputs.next()
+        null_mutt, original_input = next(original_inputs)
         original_events = app.getData(prepare_inputs(original_input))
 
         if original_events is None:
