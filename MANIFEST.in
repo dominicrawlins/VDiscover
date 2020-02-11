@@ -1,1 +1,2 @@
 recursive-include vdiscover/data *
+recursive-include examples/ *

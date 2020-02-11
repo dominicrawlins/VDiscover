@@ -17,8 +17,8 @@ along with VDISCOVER. If not, see <http://www.gnu.org/licenses/>.
 Copyright 2014 by G.Grieco
 """
 
-from Event import Call, Crash, Abort, Exit, Signal, Vulnerability
-from Analysis import FindModule
+from vdiscover.Event import Call, Crash, Abort, Exit, Signal, Vulnerability
+from vdiscover.Analysis import FindModule
 
 
 def detect_vulnerabilities(preevents, events, process, mm):

@@ -32,12 +32,10 @@ class MemoryMaps:
 
         for line in open('/proc/' + str(self.pid) + '/maps'):
             line = line.replace("\n", "")
-            # print line
             x = line.split(" ")
 
             mrange = x[0].split("-")
             mrange = map(lambda s: int(s, 16), mrange)
-            # print tuple(mrange)
 
             self.mm[tuple(mrange)] = x[-1]
             self.atts[tuple(mrange)] = x[1]

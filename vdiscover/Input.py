@@ -42,7 +42,7 @@ class Input:
         return len(self.data)
 
     def copy(self):
-        # print "data:",self.data
+        # print("data:",self.data)
         return copy.copy(self)
 
     def isSymbolic(self):

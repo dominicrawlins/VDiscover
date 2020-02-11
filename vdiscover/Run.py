@@ -74,9 +74,9 @@ def createChild(arguments, no_stdout, env=None):
     if pid:
         return pid
     else:
-        # print "limit",getrlimit(RLIMIT_DATA)
+        # print("limit",getrlimit(RLIMIT_DATA))
         setrlimit(RLIMIT_AS, (1024 * 1024 * 1024, -1))
-        # print "limit",getrlimit(RLIMIT_DATA)
+        # print("limit",getrlimit(RLIMIT_DATA))
 
         try:
             ptrace_traceme()
@@ -92,23 +92,23 @@ def Launch(cmd, no_stdout, env):
     global c
     c = c + 1
     #cmd = ["/usr/bin/timeout", "-k", "1", "3"]+cmd
-    # print cmd
+    # print(cmd)
     if cmd[-1][0:2] == "< ":
         filename = cmd[-1].replace("< ", "")
 
         # try:
         #  close(3)
         # except OSError:
-        #  print "OsError!"
+        #  print("OsError!")
         #  pass
 
         for fd in fds:
-            # print fd,
+            # print(fd,)
             try:
                 close(fd)
-                # print "closed!"
+                # print("closed!")
             except OSError:
-                # print "failed close!"
+                # print("failed close!")
                 pass
 
         fds = []
@@ -121,14 +121,14 @@ def Launch(cmd, no_stdout, env):
 
         cmd = cmd[:-1]
 
-    # print "c:", c
-    # print "self pid", getpid()
+    # print("c:", c)
+    # print("self pid", getpid())
 
     r = createChild(cmd, no_stdout, env)
 
-    # print "new pid", r
-    # print "self pid", getpid()
-    # print "Done!"
+    # print("new pid", r)
+    # print("self pid", getpid())
+    # print("Done!")
 
     return r
 
@@ -141,13 +141,13 @@ def Launch(cmd, no_stdout, env):
 #        self.timeout = timeout
 #
 #    def Run(self):
-#        #print self.cmd
+#        #print(self.cmd)
 #        self.p = subprocess.call(self.cmd, shell=False)
 #        #self.p.wait()
 #        #self.join(self.timeout)
 #
 #        #if self.is_alive():
-#            #print "terminate: ", self.p.pid
+#            #print("terminate: ", self.p.pid)
 #            #self.p.kill()
 #            #self.join()
 #            #return True

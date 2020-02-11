@@ -22,7 +22,7 @@ import copy
 
 from subprocess import Popen, PIPE, STDOUT
 
-import Input
+import vdiscover.Input
 
 
 def opened_files(program, args, files, timeout=5):
@@ -43,12 +43,12 @@ def opened_files(program, args, files, timeout=5):
 
     for mfile in files:
         filename = mfile.filename
-        # print "checking",filename
+        # print("checking",filename)
         if 'open("' + filename in output[1]:
             return True
 
     return False
-    # print output
+
 
 
 def fuzz_cmd(prepared_inputs, fuzzer_cmd, seed):
@@ -159,7 +159,7 @@ class RandomExpanderMutator(Mutator):
         j = random.randrange(self.max_expansion)
         m = self.array[random.randrange(self.array_len)]
 
-        # print self.array[rand]
+        # print(self.array[rand])
         input.data = input.data[:i] + m * j + input.data[i + 1:]
 
         rpos = int(i / (float(self.input_len)) * 100.0)

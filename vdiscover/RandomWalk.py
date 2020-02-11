@@ -23,9 +23,9 @@ import sys
 import csv
 import re
 
-from ELF import ELF
-from Spec import specs
-from Misc import readmodfile
+from vdiscover.ELF import ELF
+from vdiscover.Spec import specs
+from vdiscover.Misc import readmodfile
 
 
 def RandomWalkElf(
@@ -36,7 +36,9 @@ def RandomWalkElf(
         max_explored_subtraces,
         min_size):
 
-    csvwriter = csv.writer(open(outfile, "a+"), delimiter='\t')
+    csv_file = open(outfile, "a+") if isinstance(outfile, str) else outfile
+
+    csvwriter = csv.writer(csv_file, delimiter='\t')
     elf = ELF(program)
 
     # plt is inverted
@@ -65,22 +67,24 @@ def RandomWalkElf(
     libc_calls = []
     labels = dict()
 
-    # print sys.argv[1]+"\t",
+    # print(sys.argv[1]+"\t",)
     #rclass = str(1)
 
-    for i, ins in enumerate(raw_inss.split("\n")):
+
+    for i, ins in enumerate(raw_inss.decode().split("\n")):
+
 
         # prefix removal
         ins = ins.replace("repz ", "")
         ins = ins.replace("rep ", "")
 
         pins = ins.split("\t")
-        # print pins
+        # print(pins)
         ins_addr = pins[0].replace(":", "").replace(" ", "")
-        # print pins,ins_addr
+        # print(pins,ins_addr)
 
         if len(pins) == 1 and ">" in ins:  # label
-            # print ins
+            # print(ins)
             # assert(0)
             x = pins[0].split(" ")
 
@@ -90,23 +94,26 @@ def RandomWalkElf(
             useful_inss_dict[ins_addr] = y
             useful_inss_list.append(y)
 
-            # print "label:",y
+
+
+            # print("label:",y)
 
         elif any(map(lambda x: x in ins, control_flow_ins)) and len(pins) == 3:  # control flow instruction
-            # print pins
+            # print(pins)
             x = pins[2].split(" ")
 
             ins_nme = x[0]
             ins_jaddr = x[-2]
 
             # if ("" == ins_jaddr):
-            #  print pins
-            # print x
-            # print ins_nme, ins_jaddr
+            #  print(pins)
+            # print(x)
+            # print(ins_nme, ins_jaddr)
             y = [i, ins_addr, ins_nme, ins_jaddr]
 
             useful_inss_dict[ins_addr] = y
             useful_inss_list.append(y)
+
 
             if "call" in pins[2]:
                 if ins_jaddr != '':
@@ -120,7 +127,7 @@ def RandomWalkElf(
             useful_inss_dict[ins_addr] = y
             useful_inss_list.append(y)
 
-    # print useful_inss_list
+    # print(useful_inss_list)
     max_inss = len(useful_inss_list)
     traces = set()
     collected_traces = ""
@@ -145,7 +152,7 @@ def RandomWalkElf(
 
             _, ins_addr, ins_nme, ins_jaddr = useful_inss_list[i + j]
 
-            # print i+j,ins_nme, ins_jaddr
+            # print(i+j,ins_nme, ins_jaddr)
 
             if ins_nme in ['call', 'callq']:  # ordinary call
                 #"addr", ins_jaddr
@@ -174,9 +181,9 @@ def RandomWalkElf(
                 break
             else:
                 pass
-                # print i+j,ins_nme, ins_jaddr
+                # print(i+j,ins_nme, ins_jaddr)
 
-            # print j
+            # print(j)
             if ins_nme == 'jmp':
 
                 if ins_jaddr in elf.plt:  # call equivalent using jmp
@@ -216,7 +223,7 @@ def RandomWalkElf(
         size = len(r.split(" ")) - 1
 
         # if x not in traces and size >= min_size:
-        # print r+" .",
+        # print(r+" .",)
         collected_traces = collected_traces + r + " ."
         # traces.add(x)
         # if len(traces) >= max_subtraces:

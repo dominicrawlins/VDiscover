@@ -38,4 +38,4 @@ for raw_spec in f.readlines():
         param_types = x[1].replace(");", "").split(",")
         specs[name] = [ret] + param_types
 
-# print specs
+# print(specs)

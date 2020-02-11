@@ -19,8 +19,8 @@ Copyright 2014 by G.Grieco
 
 import pickle
 
-from Utils import *
-from Pipeline import *
+from vdiscover.Utils import *
+from vdiscover.Pipeline import *
 from sklearn.metrics import confusion_matrix
 
 
@@ -29,23 +29,23 @@ def TrainScikitLearn(model_file, train_file, valid_file, vtype, ftype, nsamples)
     modelfile = openModel(model_file)
     train_programs, train_features, train_classes = readTraces(
         train_file, nsamples, cut=None)
-    print "using", len(train_features), "examples to train."
+    print("using", len(train_features), "examples to train.")
 
     train_dict = dict()
     train_dict[ftype] = train_features
 
-    print "Transforming data and fitting model.."
+    print("Transforming data and fitting model..")
 
     if vtype == "bow":
         model = makeTrainPipelineBOW(ftype)
 
     model.fit(train_dict, train_classes)
 
-    print "Done!"
-    # print model
-    # print confusion_matrix(train_classes, model.predict(train_dict))
+    print("Done!")
+    # print(model)
+    # print(confusion_matrix(train_classes, model.predict(train_dict)))
 
-    print "Saving model to", model_file
+    print("Saving model to", model_file)
     modelfile.write(pickle.dumps(model))
 
 
@@ -59,7 +59,7 @@ def TrainKeras(model_file, train_file, valid_file, ftype, nsamples):
     train_programs = []
     train_classes = []
 
-    print "Reading and sampling data to train..",
+    print("Reading and sampling data to train..",)
     if nsamples is None:
         for i, (program, features, cl) in enumerate(csvreader):
             train_programs.append(program)
@@ -84,7 +84,7 @@ def TrainKeras(model_file, train_file, valid_file, ftype, nsamples):
 
     assert(train_size == len(train_classes))
 
-    print "using", train_size, "examples to train."
+    print("using", train_size, "examples to train.")
 
     train_dict = dict()
     train_dict[ftype] = train_features
@@ -94,7 +94,7 @@ def TrainKeras(model_file, train_file, valid_file, ftype, nsamples):
     from keras.preprocessing.text import Tokenizer
 
     tokenizer = Tokenizer(nb_words=None, filters="", lower=False, split=" ")
-    # print type(train_features[0])
+    # print(type(train_features[0]))
     tokenizer.fit_on_texts(train_features)
     max_features = len(tokenizer.word_counts)
 
@@ -107,13 +107,13 @@ def TrainKeras(model_file, train_file, valid_file, ftype, nsamples):
         valid_programs = []
         valid_classes = []
 
-        print "Reading data to valid..",
+        print("Reading data to valid..",)
         for i, (program, features, cl) in enumerate(csvreader):
             valid_programs.append(program)
             valid_features.append(features)
             valid_classes.append(int(cl))
 
-        print "using", len(train_features), "examples to valid."
+        print("using", len(train_features), "examples to valid.")
         #X_valid,y_valid = preprocessor.preprocess(valid_features, valid_classes)
     else:
         valid_features, train_features = train_features[
@@ -132,7 +132,7 @@ def TrainKeras(model_file, train_file, valid_file, ftype, nsamples):
     from keras.layers.recurrent import LSTM, GRU
     from keras.optimizers import Adam
 
-    print "Creating and compiling a LSTM.."
+    print("Creating and compiling a LSTM..")
     model = Sequential()
     model.add(Embedding(max_features, 10))
     model.add(LSTM(10, 32))
@@ -149,7 +149,7 @@ def TrainKeras(model_file, train_file, valid_file, ftype, nsamples):
     model.fit(X_train, y_train, batch_size=batch_size,
               nb_epoch=5, show_accuracy=True)
 
-    print "Saving model to", model_file
+    print("Saving model to", model_file)
 
     modelfile.write(pickle.dumps(KerasPredictor(preprocessor, model, ftype)))
 """
@@ -162,6 +162,6 @@ def Train(model_file, train_file, valid_file, model_type, vector_type, feature_t
     #    try:
     #        import keras
     #    except:
-    #        print "Failed to import keras modules to perform LSTM training"
+    #        print("Failed to import keras modules to perform LSTM training")
     #        return
     #    TrainKeras(model_file, train_file, valid_file, ftype, nsamples)

@@ -63,7 +63,7 @@ if __name__ == "__main__":
         pass
     else:
         # or (name not is None and cmd is not None) and in_file is None:
-        print "Either name and command should be used or an input file"
+        print("Either name and command should be used or an input file")
         exit(-1)
 
     try:
@@ -92,6 +92,6 @@ if __name__ == "__main__":
             if arg != '':
                 pargs = pargs + arg
         #args = concatenate(args)
-        print "Procesing '" + " ".join(pargs) + "'"
+        print("Procesing '" + " ".join(pargs) + "'")
         #args = filter(lambda x: x is not '', cmd.split(" "))
         WriteTestcase(name, pargs[0], pargs[1:], copy)

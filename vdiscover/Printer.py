@@ -21,8 +21,8 @@ import sys
 import csv
 import copy
 
-from Event import Call, Crash, Abort, Exit, Timeout, Signal, Vulnerability, specs
-from Types import ptypes, isPtr, isNum, ptr32_ptypes, num32_ptypes, generic_ptypes
+from vdiscover.Event import Call, Crash, Abort, Exit, Timeout, Signal, Vulnerability, specs
+from vdiscover.Types import ptypes, isPtr, isNum, ptr32_ptypes, num32_ptypes, generic_ptypes
 
 
 class TypePrinter:

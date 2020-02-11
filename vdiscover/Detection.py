@@ -21,7 +21,7 @@ import os
 import os.path
 import shutil
 
-from Input import Arg, File
+from vdiscover.Input import Arg, File
 
 
 def GetCmd(s):
@@ -68,11 +68,9 @@ def WriteTestcase(name, program, args, copy=False):
     os.chdir("inputs")
     for i, arg in enumerate(args):
         if "file:" in arg:
-            # print arg
             arg = arg.replace("file:", "")
             assert(arg[0] == '/')
             filename = os.path.split(arg)[-1]
-            # print filename
             if copy:
                 shutil.copyfile(os.path.realpath(arg), "file_" + filename)
             else:
@@ -91,9 +89,7 @@ def GetArgs():
 
     for _, _, files in os.walk('.'):
         for f in files:
-            # print f
             for i in range(10):
-                # print str(i), f
 
                 if ("cargv_" + str(i)) in f:
                     x = GetArg(i, True)
@@ -110,13 +106,11 @@ def GetArgs():
                     break
 
     r.sort()
-    # print r
     for i in range(len(r)):
         if r[i].i != i + 1:
             r = r[0:i]
             break
 
-    # print r
     return r
 
 

@@ -30,8 +30,8 @@ import matplotlib as mpl
 # mpl.use('Agg')
 import matplotlib.pyplot as plt
 
-from Utils import *
-from Pipeline import *
+from vdiscover.Utils import *
+from vdiscover.Pipeline import *
 
 
 # def Cluster(X, labels)
@@ -41,7 +41,7 @@ from Pipeline import *
   from sklearn.cluster import MeanShift, estimate_bandwidth
 
   bandwidth = estimate_bandwidth(X, quantile=0.2)
-  print "Clustering with bandwidth:", bandwidth
+  print("Clustering with bandwidth:", bandwidth)
 
   af = MeanShift(bandwidth=bandwidth/1).fit(X_red)
 
@@ -93,7 +93,7 @@ def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
 
     max_features = len(preprocessor.tokenizer.word_counts)
 
-    print "Reading and sampling data to train.."
+    print("Reading and sampling data to train..")
     train_programs, train_features, train_classes = read_traces(
         train_file, nsamples, cut=None)
     train_size = len(train_features)
@@ -118,7 +118,7 @@ def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
     model = make_cluster_pipeline_subtraces(ftype)
     X_red_comp = model.fit_transform(train_dict)
     explained_var = np.var(X_red_comp, axis=0)
-    print explained_var
+    print(explained_var)
 
     X_red = X_red_comp[:, 0:2]
     X_red_next = X_red_comp[:, 2:4]
@@ -127,7 +127,7 @@ def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
     progs = list(set(labels))
     ncolors = len(colors)
     size = len(labels)
-    print "Plotting.."
+    print("Plotting..")
 
     for prog, [x, y] in zip(labels, X_red):
         # for prog,[x,y] in sample(zip(labels, X_red), min(size, 1000)):
@@ -157,19 +157,19 @@ def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
   plt.show()
   """
     plt.savefig(train_file.replace(".gz", "") + ".png")
-    print "Bandwidth estimation.."
+    print("Bandwidth estimation..")
     from sklearn.cluster import MeanShift, estimate_bandwidth
 
     X_red_sample = X_red[:min(size, 1000)]
     bandwidth = estimate_bandwidth(X_red_sample, quantile=0.2)
-    print "Clustering with bandwidth:", bandwidth
+    print("Clustering with bandwidth:", bandwidth)
 
     #X_red = np.vstack((X_red,X_red_valid))
     #X_red_next = np.vstack((X_red_next,X_red_valid_next))
     #labels = labels + valid_labels
 
-    print X_red.shape, len(X_red), len(labels)
-    # print valid_labels
+    print(X_red.shape, len(X_red), len(labels))
+    # print(valid_labels)
 
     af = MeanShift(bandwidth=bandwidth / 1).fit(X_red)
 
@@ -184,7 +184,6 @@ def ClusterCnn(model_file, train_file, valid_file, ftype, nsamples, outdir):
         x = gauss(0, 0.1) + x
         y = gauss(0, 0.1) + y
         plt.scatter(x, y, c=colors[cluster_label % ncolors])
-        # print label
         # if label in valid_labels:
         #  plt.text(x-0.05, y+0.01, label.split("/")[-1])
 
@@ -270,14 +269,14 @@ def TrainCnn(model_file, train_file, valid_file, ftype, nsamples):
     from keras.preprocessing.text import Tokenizer
 
     tokenizer = Tokenizer(nb_words=None, filters="", lower=False, split=" ")
-    # print type(train_features[0])
+    # print(type(train_features[0]))
     tokenizer.fit_on_texts(train_features)
     max_features = len(tokenizer.word_counts)
 
     preprocessor = DeepReprPreprocessor(tokenizer, window_size, batch_size)
     X_train, y_train = preprocessor.preprocess(train_features, 10000)
     nb_classes = len(preprocessor.classes)
-    print preprocessor.classes
+    print(preprocessor.classes)
 
     model = make_cluster_cnn(
         "train",
@@ -294,12 +293,12 @@ def TrainCnn(model_file, train_file, valid_file, ftype, nsamples):
     model.mypreprocessor = preprocessor
     #model_file = model_file + ".wei"
     #modelfile = open_model(model_file)
-    print "Saving model to", model_file + ".wei"
+    print("Saving model to", model_file + ".wei")
     model.save_weights(model_file + ".wei")
 
     #model_file = model_file + ".pre"
     modelfile = open_model(model_file + ".pre")
-    print "Saving preprocessor to", model_file + ".pre"
+    print("Saving preprocessor to", model_file + ".pre")
     # model.save_weights(model_file)
     modelfile.write(pickle.dumps(preprocessor, protocol=2))
 
@@ -309,12 +308,12 @@ def ClusterDoc2Vec(model_file, train_file, valid_file, ftype, nsamples, param):
   train_programs, train_features, train_classes = read_traces(train_file, nsamples)
   train_size = len(train_programs)
 
-  print "using", train_size,"examples to train."
+  print("using", train_size,"examples to train.")
 
   from gensim.models.doc2vec import TaggedDocument
   from gensim.models import Doc2Vec
 
-  print "Vectorizing traces.."
+  print("Vectorizing traces..")
   sentences = []
 
   for (prog,trace) in zip(train_programs,train_features):
@@ -324,7 +323,6 @@ def ClusterDoc2Vec(model_file, train_file, valid_file, ftype, nsamples, param):
   model.build_vocab(sentences)
 
   for epoch in range(20):
-    #print model
     model.train(sentences)
     shuffle(sentences)
 
@@ -332,12 +330,12 @@ def ClusterDoc2Vec(model_file, train_file, valid_file, ftype, nsamples, param):
 
   vec_train_features = []
   for prog in train_programs:
-    #print prog, model.docvecs[prog]
+    #print(prog, model.docvecs[prog])
     vec_train_features.append(model.docvecs[prog])
 
   train_dict[ftype] = vec_train_features
 
-  print "Transforming data and fitting model.."
+  print("Transforming data and fitting model..")
   model = make_cluster_pipeline_doc2vec(ftype)
   X_red = model.fit_transform(train_dict)
 
@@ -361,7 +359,7 @@ def ClusterDoc2Vec(model_file, train_file, valid_file, ftype, nsamples, param):
   from sklearn.cluster import MeanShift, estimate_bandwidth
 
   bandwidth = estimate_bandwidth(X_red, quantile=0.2)
-  print "Clustering with bandwidth:", bandwidth
+  print("Clustering with bandwidth:", bandwidth)
 
   af = MeanShift(bandwidth=bandwidth*param).fit(X_red)
 
@@ -408,7 +406,7 @@ def ClusterScikit(
     train_programs, train_features, train_classes = read_traces(
         train_file, nsamples)
     train_size = len(train_programs)
-    print "using", train_size, "examples to train."
+    print("using", train_size, "examples to train.")
 
     if vectorizer == "bow":
 
@@ -417,7 +415,7 @@ def ClusterScikit(
         #batch_size = 16
         #window_size = 20
 
-        print "Transforming data and fitting model.."
+        print("Transforming data and fitting model..")
         model = make_cluster_pipeline_bow(ftype, reducer)
         X_red = model.fit_transform(train_dict)
 
@@ -426,7 +424,7 @@ def ClusterScikit(
         from gensim.models.doc2vec import TaggedDocument
         from gensim.models import Doc2Vec
 
-        print "Vectorizing traces.."
+        print("Vectorizing traces..")
         sentences = []
 
         for (prog, trace) in zip(train_programs, train_features):
@@ -437,7 +435,6 @@ def ClusterScikit(
         model.build_vocab(sentences)
 
         for epoch in range(20):
-            # print model
             model.train(sentences)
             shuffle(sentences)
 
@@ -445,19 +442,19 @@ def ClusterScikit(
 
         vec_train_features = []
         for prog in train_programs:
-            # print prog, model.docvecs[prog]
+            # print(prog, model.docvecs[prog])
             vec_train_features.append(model.docvecs[prog])
 
         train_dict[ftype] = vec_train_features
 
-        print "Transforming data and fitting model.."
+        print("Transforming data and fitting model..")
         model = make_cluster_pipeline_doc2vec(ftype, reducer)
         X_red = model.fit_transform(train_dict)
 
     #pl.rcParams.update({'font.size': 10})
     if isinstance(X_red, list):
         X_red = np.vstack(X_red)
-        print X_red.shape
+        print(X_red.shape)
 
     if X_red.shape[1] == 2:
 
@@ -493,7 +490,7 @@ def ClusterScikit(
     from sklearn.cluster import MeanShift, estimate_bandwidth
 
     bandwidth = estimate_bandwidth(X_red, quantile=0.2)
-    print "Clustering with bandwidth:", bandwidth
+    print("Clustering with bandwidth:", bandwidth)
 
     af = MeanShift(bandwidth=bandwidth * param).fit(X_red)
 

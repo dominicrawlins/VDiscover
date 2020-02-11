@@ -64,7 +64,7 @@ if __name__ == "__main__":
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
-    print "Copying seeds.."
+    print("Copying seeds..")
     for seed in selected:
-        print seed
+        print(seed)
         shutil.copy(seed, outdir)

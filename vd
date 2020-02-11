@@ -71,7 +71,7 @@ if __name__ == "__main__":
     traces_path = outfile  # outdir+"/traces.raw"
 
     if os.path.exists(traces_path):
-        print traces_path, "exists. I will not overwritte it. Aborting"
+        print(traces_path, "exists. I will not overwritte it. Aborting")
     else:
 
         modules_to_trace = [main_module]
@@ -84,16 +84,16 @@ if __name__ == "__main__":
                 for f in files:
                     modules_to_trace.append(f)
 
-        print "Tracing", modules_to_trace
+        print("Tracing", modules_to_trace)
         app = Process(program, envs, timeout, modules_to_trace, [], True)
         prt = TypePrinter(traces_path, program, 0)
         traces = []
         all_files = []
 
-        print "Extracting traces.."
+        print("Extracting traces..")
         for x, y, files in os.walk(seeds):
             nfiles = len(files)
-            # print "Processing directory ","./"++("/".join(y)), "with",
+            # print("Processing directory ","./"++("/".join(y)), "with",)
             # nfiles, "seeds"
             for f in files:
                 all_files.append(x + "/".join(y) + "/" + f)
@@ -102,7 +102,6 @@ if __name__ == "__main__":
         nfiles = len(all_files)
 
         for progress, testcase in enumerate(all_files):
-            # print testcase
             progress = round(float(progress) / nfiles, 4)
             update_progress(progress)
             prepared_cmd = cmd.replace(program, "")
@@ -113,18 +112,18 @@ if __name__ == "__main__":
             else:
                prepared_cmd = [prepared_cmd ,"< "+testcase]
                #print(prepared_cmd)
- 
+
             prepared_cmd = filter(lambda x: x != '', prepared_cmd)
-            # print "Getting data.."
+            # print("Getting data..")
             events = app.getData(prepared_cmd)
-            # print "Printing data.. ", len(events)
+            # print("Printing data.. ", len(events))
             traces.append(prt.print_events(testcase, events))
-            # print prepared_cmd
-            # print traces[-1]
+            # print(prepared_cmd)
+            # print(traces[-1])
 
     # if vectorizer is None:
     #  clustered_traces = ClusterScikit(vectorizer, traces, None, "dynamic", None)
     # else:
     #  clustered_traces = ClusterConv(vectorizer, traces, None, "dynamic", None, None)
     #  cluster_sampler(clustered_traces,1)
-    #  #print clusters
+    #  #print(clusters)
