@@ -22,7 +22,7 @@ import csv
 import copy
 
 from vdiscover.Event import Call, Crash, Abort, Exit, Timeout, Signal, Vulnerability, specs
-from vdiscover.Types import ptypes, isPtr, isNum, ptr32_ptypes, num32_ptypes, generic_ptypes
+from vdiscover.Types import ptypes, isPtr, isNum, ptr32_ptypes, num32_ptypes, generic32_ptypes, ptr64_ptypes, num64_ptypes, generic64_ptypes
 
 
 class TypePrinter:
@@ -50,7 +50,7 @@ class TypePrinter:
 
         elif isinstance(event, Exit):
             (name, fields) = event.GetTypedName()
-            r.append((name, str(())))
+            r.append((name, str((fields[0]))))
 
         elif isinstance(event, Crash):
             (name, fields) = event.GetTypedName()

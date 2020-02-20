@@ -35,7 +35,7 @@ class MemoryMaps:
             x = line.split(" ")
 
             mrange = x[0].split("-")
-            mrange = map(lambda s: int(s, 16), mrange)
+            mrange = list(map(lambda s: int(s, 16), mrange))
 
             self.mm[tuple(mrange)] = x[-1]
             self.atts[tuple(mrange)] = x[1]
