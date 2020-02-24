@@ -30,12 +30,12 @@ from sklearn.decomposition import PCA, TruncatedSVD
 from random import random, randint, sample, gauss, shuffle
 
 
-def staticTokenizer(s):
+def static_tokenizer(s):
     return filter(lambda x: x != '', s.split(" "))
 
 
-def dynamicTokenizer(s):
-    return filter(lambda x: x != '', s.split(" "))
+def dynamic_tokenizer(s):
+    return list(filter(lambda x: x != '', s.split(" ")))
 
 
 class DenseTransformer(TransformerMixin):
@@ -101,7 +101,7 @@ def makeTrainPipelineBOW(ftype):
 
         return Pipeline(steps=[
             ('selector', ItemSelector(key='dynamic')),
-            ('dvectorizer', CountVectorizer(tokenizer=dynamicTokenizer,
+            ('dvectorizer', CountVectorizer(tokenizer=dynamic_tokenizer,
                                             ngram_range=(1, 3), lowercase=False, vocabulary=event_dict)),
             ('todense', DenseTransformer()),
             ('cutfoff', CutoffMax(16)),

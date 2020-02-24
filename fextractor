@@ -158,9 +158,12 @@ if __name__ == "__main__":
 
     csvfile = options.out_file
 
+    if(testcase in os.listdir(os.path.join(os.path.dirname(__file__), "../../examples/testcases/"))):
+        os.chdir(os.path.join(os.path.dirname(__file__), "../../examples/testcases/", testcase))
+        program = GetCmd(None)
+    else:
+        program = testcase
 
-    os.chdir(os.path.join(os.path.dirname(__file__), "../../examples/testcases/", testcase))
-    program = GetCmd(None)
 
     if static_only:
 
