@@ -103,7 +103,7 @@ def _load_cached_data(path, plt, got, base):
     return True
 
 
-def plt_got(path, base):
+def plt_got(path, base, offset):
     plt, got = dict(), dict()
 
     if _load_cached_data(path, plt, got, base):
@@ -117,7 +117,7 @@ def plt_got(path, base):
         '([a-fA-F0-9]+)\s+<([^@<]+)@plt>:(%s|%s)' % (got32, got64), out)
 
     for addr, name, _, gotaddr32, gotaddr64 in lines:
-        addr = int(addr, 16)
+        addr = int(addr, 16) + offset
 
         try:
             gotaddr = int(gotaddr32 or gotaddr64, 16)
@@ -141,16 +141,18 @@ def load_raw_inss(path):
     return raw_instructions
 
 
-def entrypoint(path):
+def entrypoint(path, offset):
     cmd = ["env", "-i", _READELF, '-hWS', path]
     out = str(subprocess.check_output(cmd))
     #elfclass = re.findall('Class:\s*(.*$)', out, re.MULTILINE)[0]
     entrypoint = int(re.findall(
         'Entry point address:\s*(.*$)', out, re.MULTILINE)[0].split("\\")[0], 16)
     if "DYN (Shared object file)" in out:
-        entrypoint = entrypoint + 0x80000000
+        entrypoint = entrypoint + offset
+    else:
+        offset = 0
 
-    return entrypoint
+    return entrypoint, offset
 
 
 def no_frame_pointer(path):
@@ -184,11 +186,12 @@ class ELF:
     '''A parsed ELF file'''
     cachedir = "cache"
 
-    def __init__(self, path, plt=True, base=0x0):
+    def __init__(self, path, plt=True, base=0x0, offset=0):
         self.path = str(path)
         self.base = base
         self.sections = dict()
         self.filetype = file_type(path)
+        self.offset = offset
 
         if self.filetype == "":
             print("The executable at", path, "cannot be found")
@@ -198,13 +201,13 @@ class ELF:
             print("The executable at", path, "is not a valid ELF file")
             exit(-1)
 
-        self.entrypoint = entrypoint(path)
+        self.entrypoint, self.offset = entrypoint(path, self.offset)
         # print(hex(self.entrypoint))
         self.no_frame_pointer = no_frame_pointer(path)
         # self._load_sections()
 
         if plt:
-            self.plt, self.got = plt_got(self.path, self.base)
+            self.plt, self.got = plt_got(self.path, self.base, self.offset)
         else:
             self.plt, self.got = dict(), dict()
         self.name2addr = self.plt

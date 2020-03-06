@@ -22,7 +22,7 @@ from ptrace.debugger import (PtraceDebugger, Application,
                              ProcessExit, NewProcessEvent, ProcessSignal,
                              ProcessExecution, ProcessError)
 
-from logging import getLogger, info, warning, error
+from logging import getLogger, info, warning, error, INFO, FileHandler
 from ptrace.error import PTRACE_ERRORS, PtraceError, writeError
 from ptrace.disasm import HAS_DISASSEMBLER
 from ptrace.ctypes_tools import (
@@ -47,6 +47,10 @@ from vdiscover.ELF import ELF
 from vdiscover.Run import Launch
 from vdiscover.MemoryMap import MemoryMaps
 from vdiscover.Alarm import alarm_handler, TimeoutEx
+
+from tempfile import NamedTemporaryFile
+
+import re
 
 
 class Process(Application):
@@ -134,7 +138,7 @@ class Process(Application):
                             any(map(lambda l: l in mod, self.ignored_mods))):
 
                         if not (mod in self.modules):
-                            self.modules[mod] = ELF(mod, base=base)
+                            self.modules[mod] = ELF(mod, base=base, offset=self.offset)
                         # print("hooking", mod, hex(base))
 
                         self.setBreakpoints(self.modules[mod])
@@ -352,7 +356,30 @@ class Process(Application):
         # Create new process
         try:
             self.process = self.createProcess(cmd, self.envs, self.no_stdout)
+
+
+
+            # create logger to get mappings dump
+            ptrace_logger = getLogger('save_ptrace_logs')
+            ptrace_logger.setLevel(INFO)
+            # save to temp file to avoid console printing
+            log_output_file = NamedTemporaryFile()
+            fh = FileHandler(log_output_file.name)
+            fh.setLevel(INFO)
+            ptrace_logger.addHandler(fh)
+            ptrace_logger.propagate = False
+
+            #get dump of mappings to find offset
+            self.process.dumpMaps(ptrace_logger.info)
+
+            offset_mappings = open(log_output_file.name).read()
+            self.offset = int(re.findall (r'0x[0-9a-fA-F]+-', offset_mappings)[0].replace("-", ""), 16)
+
+            self.elf = ELF(self.program, plt=False, offset=self.offset)
+
             self.process.no_frame_pointer = self.elf.no_frame_pointer
+
+
             #self.mm  = MemoryMaps(self.program, self.pid)
             # print(self.mm)
             self.crashed = False
