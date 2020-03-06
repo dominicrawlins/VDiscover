@@ -22,7 +22,7 @@ from ptrace.debugger import (PtraceDebugger, Application,
                              ProcessExit, NewProcessEvent, ProcessSignal,
                              ProcessExecution, ProcessError)
 
-from logging import getLogger, info, warning, error
+from logging import getLogger, info, warning, error, INFO, FileHandler
 from ptrace.error import PTRACE_ERRORS, PtraceError, writeError
 from ptrace.disasm import HAS_DISASSEMBLER
 from ptrace.ctypes_tools import (
@@ -47,6 +47,10 @@ from vdiscover.ELF import ELF
 from vdiscover.Run import Launch
 from vdiscover.MemoryMap import MemoryMaps
 from vdiscover.Alarm import alarm_handler, TimeoutEx
+
+from tempfile import NamedTemporaryFile
+
+import re
 
 
 class Process(Application):
@@ -84,10 +88,6 @@ class Process(Application):
         # Parse ELF
         self.elf = ELF(self.program, plt=False)
 
-        # if self.elf.GetType() <> "ELF 32-bit":
-        #  print("Only ELF 32-bit are supported to be executed.")
-        #  exit(-1)
-
         self.modules = dict()
 
         self.last_signal = {}
@@ -117,6 +117,64 @@ class Process(Application):
         else:
             return None, None
 
+    def createCallBreakpoints(self, entry_breakpoint):
+        entry_breakpoint.desinstall(set_ip=True)
+
+        self.mm = MemoryMaps(self.program, self.pid)
+        # self.setBreakpoints(self.elf)
+
+        for (range, mod, atts) in self.mm.items():
+            if '/' in mod and 'x' in atts and not ("libc-" in mod):
+
+                # FIXME: self.elf.path should be absolute
+                if mod == self.elf.path:
+                    base = 0
+                else:
+                    base = range[0]
+
+                if self.included_mods == [] or any(
+                        map(lambda l: l in mod, self.included_mods)):
+                    if self.ignored_mods == [] or not (
+                            any(map(lambda l: l in mod, self.ignored_mods))):
+
+                        if not (mod in self.modules):
+                            self.modules[mod] = ELF(mod, base=base, offset=self.offset)
+                        # print("hooking", mod, hex(base))
+
+                        self.setBreakpoints(self.modules[mod])
+
+    def updateCallBreakpoint(self, call_breakpoint, module, name, ip):
+        call = Call(name, module)
+        # self.mm.update()
+        # print("updated mm")
+        call.detect_parameters(self.process, self.mm)
+        call_breakpoint.desinstall(set_ip=True)
+
+        call_ip = ip
+        self.process.singleStep()
+        self.debugger.waitProcessEvent()
+
+        n = self.nevents.get((ip, name), 0)
+        self.nevents[(ip, name)] = n + 2
+
+        for ((ip_, name_), n) in self.nevents.items():
+
+            if n > self.min_events + 1:
+                self.nevents[(ip_, name_)] = n - 1
+            elif n == self.min_events + 1:
+                self.nevents[(ip_, name_)] = self.min_events
+                # print("restoring!", (ip, name))
+                self.breakpoint(call_ip)
+
+        if n < self.max_events:
+            self.breakpoint(call_ip)
+        # else:
+            # print("disabled!", (ip, name))
+
+        # print("call detected!")
+        return [call]
+
+
     def createEvents(self, signal):
             # Hit breakpoint?
         if signal.signum == SIGTRAP:
@@ -125,76 +183,21 @@ class Process(Application):
                 # Go before "INT 3" instruction
                 ip -= 1
             breakpoint = self.process.findBreakpoint(ip)
-            # print("breakpoint @",hex(ip))
 
             if breakpoint:
                 module, name = self.findBreakpointInfo(breakpoint.address)
-                # print(module, name, hex(ip))
+
 
                 if ip == self.elf.GetEntrypoint():
-                    breakpoint.desinstall(set_ip=True)
-
-                    # if self.mm is None:
-                    self.mm = MemoryMaps(self.program, self.pid)
-                    # self.setBreakpoints(self.elf)
-
-                    # print(self.mm)
-
-                    for (range, mod, atts) in self.mm.items():
-                        if '/' in mod and 'x' in atts and not ("libc-" in mod):
-
-                            # FIXME: self.elf.path should be absolute
-                            if mod == self.elf.path:
-                                base = 0
-                            else:
-                                base = range[0]
-
-                            if self.included_mods == [] or any(
-                                    map(lambda l: l in mod, self.included_mods)):
-                                if self.ignored_mods == [] or not (
-                                        any(map(lambda l: l in mod, self.ignored_mods))):
-
-                                    if not (mod in self.modules):
-                                        self.modules[mod] = ELF(mod, base=base)
-                                    # print("hooking", mod, hex(base))
-
-                                    self.setBreakpoints(self.modules[mod])
-
+                    self.createCallBreakpoints(breakpoint)
                     return []
 
                 elif name is None:
                     assert(0)
 
                 else:
-                    call = Call(name, module)
-                    # self.mm.update()
-                    # print("updated mm")
-                    call.detect_parameters(self.process, self.mm)
-                    breakpoint.desinstall(set_ip=True)
-
-                    call_ip = ip
-                    self.process.singleStep()
-                    self.debugger.waitProcessEvent()
-
-                    n = self.nevents.get((ip, name), 0)
-                    self.nevents[(ip, name)] = n + 2
-
-                    for ((ip_, name_), n) in self.nevents.items():
-
-                        if n > self.min_events + 1:
-                            self.nevents[(ip_, name_)] = n - 1
-                        elif n == self.min_events + 1:
-                            self.nevents[(ip_, name_)] = self.min_events
-                            # print("restoring!", (ip, name))
-                            self.breakpoint(call_ip)
-
-                    if n < self.max_events:
-                        self.breakpoint(call_ip)
-                    # else:
-                        # print("disabled!", (ip, name))
-
-                    # print("call detected!")
-                    return [call]
+                    call_list = self.updateCallBreakpoint(breakpoint, module, name, ip)
+                    return call_list
 
         elif signal.signum == SIGABRT:
             self.crashed = True
@@ -353,7 +356,30 @@ class Process(Application):
         # Create new process
         try:
             self.process = self.createProcess(cmd, self.envs, self.no_stdout)
+
+
+
+            # create logger to get mappings dump
+            ptrace_logger = getLogger('save_ptrace_logs')
+            ptrace_logger.setLevel(INFO)
+            # save to temp file to avoid console printing
+            log_output_file = NamedTemporaryFile()
+            fh = FileHandler(log_output_file.name)
+            fh.setLevel(INFO)
+            ptrace_logger.addHandler(fh)
+            ptrace_logger.propagate = False
+
+            #get dump of mappings to find offset
+            self.process.dumpMaps(ptrace_logger.info)
+
+            offset_mappings = open(log_output_file.name).read()
+            self.offset = int(re.findall (r'0x[0-9a-fA-F]+-', offset_mappings)[0].replace("-", ""), 16)
+
+            self.elf = ELF(self.program, plt=False, offset=self.offset)
+
             self.process.no_frame_pointer = self.elf.no_frame_pointer
+
+
             #self.mm  = MemoryMaps(self.program, self.pid)
             # print(self.mm)
             self.crashed = False

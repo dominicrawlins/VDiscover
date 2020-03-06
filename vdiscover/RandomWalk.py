@@ -73,42 +73,27 @@ def RandomWalkElf(
 
     for i, ins in enumerate(raw_inss.decode().split("\n")):
 
-
         # prefix removal
         ins = ins.replace("repz ", "")
         ins = ins.replace("rep ", "")
 
         pins = ins.split("\t")
-        # print(pins)
         ins_addr = pins[0].replace(":", "").replace(" ", "")
-        # print(pins,ins_addr)
 
         if len(pins) == 1 and ">" in ins:  # label
-            # print(ins)
-            # assert(0)
             x = pins[0].split(" ")
-
             ins_addr = x[0]
 
             y = [i, ins_addr, None, None]
             useful_inss_dict[ins_addr] = y
             useful_inss_list.append(y)
 
-
-
-            # print("label:",y)
-
         elif any(map(lambda x: x in ins, control_flow_ins)) and len(pins) == 3:  # control flow instruction
-            # print(pins)
             x = pins[2].split(" ")
 
             ins_nme = x[0]
             ins_jaddr = x[-2]
 
-            # if ("" == ins_jaddr):
-            #  print(pins)
-            # print(x)
-            # print(ins_nme, ins_jaddr)
             y = [i, ins_addr, ins_nme, ins_jaddr]
 
             useful_inss_dict[ins_addr] = y
@@ -127,7 +112,7 @@ def RandomWalkElf(
             useful_inss_dict[ins_addr] = y
             useful_inss_list.append(y)
 
-    # print(useful_inss_list)
+
     max_inss = len(useful_inss_list)
     traces = set()
     collected_traces = ""
@@ -152,10 +137,8 @@ def RandomWalkElf(
 
             _, ins_addr, ins_nme, ins_jaddr = useful_inss_list[i + j]
 
-            # print(i+j,ins_nme, ins_jaddr)
 
             if ins_nme in ['call', 'callq']:  # ordinary call
-                #"addr", ins_jaddr
 
                 if ins_jaddr == '':
                     break  # parametric jmp, similar to ret for us
@@ -179,11 +162,7 @@ def RandomWalkElf(
 
             elif ins_nme in ['ret', 'retq']:
                 break
-            else:
-                pass
-                # print(i+j,ins_nme, ins_jaddr)
 
-            # print(j)
             if ins_nme == 'jmp':
 
                 if ins_jaddr in elf.plt:  # call equivalent using jmp

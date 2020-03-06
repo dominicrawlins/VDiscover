@@ -125,9 +125,11 @@ class Signal(Event):
 
         self.name = name
 
+        self.ptr = "Ptr64" if CPU_X86_64 else "Ptr32"
+        self.bytes = 8 if CPU_X86_64 else 4
         if hasattr(_sifields, "_sigfault") and self.name == "SIGSEGV":
             self.fields["addr"] = RefinePType(
-                Type("Ptr32", 4), _sifields._sigfault._addr, process, mm)
+                Type(self.ptr, self.bytes), _sifields._sigfault._addr, process, mm)
             # print("sigfault @",  _sifields._sigfault._addr)
 
     def __str__(self):
@@ -178,24 +180,20 @@ class Abort(Event):
         # print(self.bt, type(self.bt))
         frames = []
 
-        if CPU_X86_64:
-            # detection of stack frame disabled, python-ptrace does not support
-            # ...
-            pass
-        if CPU_I386:
+        for i, frame in enumerate(self.bt.frames):
+            r_type = RefinePType(Type("Ptr32", 4), frame.ip, process, mm)
+            frames.append(r_type)
 
-            for i, frame in enumerate(self.bt.frames):
-                r_type = RefinePType(Type("Ptr32", 4), frame.ip, process, mm)
-                frames.append(r_type)
-
-                if str(r_type[0]) == "DPtr32":
-                    break
+            if str(r_type[0]) == "DPtr32":
+                break
 
         self.bt.frames = frames
         # print("frames",frames)
         # print("self.bt.frames", self.bt.frames)
+        ptr = "Ptr64" if CPU_X86_64 else "Ptr32"
+        bytes = 8 if CPU_X86_64 else 4
 
-        self.eip = RefinePType(Type("Ptr32", 4), ip, process, mm)
+        self.eip = RefinePType(Type(ptr, bytes), ip, process, mm)
 
     def __str__(self):
         return str(self.name)
@@ -225,7 +223,10 @@ class Crash(Event):
 
         self.module = FindModule(ip, mm)
 
-        self.fp_type = RefinePType(Type("Ptr32", 4), fp, process, mm)
+        ptr = "Ptr64" if CPU_X86_64 else "Ptr32"
+        bytes = 8 if CPU_X86_64 else 4
+
+        self.fp_type = RefinePType(Type(ptr, bytes), fp, process, mm)
         # print("fp:",hex(fp_type[1]), str(fp_type[0]))
         if not process.no_frame_pointer:  # str(self.fp_type[0]) == "SPtr32":
             self.bt = getBacktrace(process, max_args=0, max_depth=20)
@@ -233,23 +234,18 @@ class Crash(Event):
             self.bt = Backtrace()
         frames = []
 
-        if CPU_X86_64:
-            # detection of stack frame disabled, python-ptrace does not support
-            # ...
-            pass
-        if CPU_I386:
 
-            for i, frame in enumerate(self.bt.frames):
-                print("frame", frame, hex(frame.ip))
-                r_type = RefinePType(Type("Ptr32", 4), frame.ip, process, mm)
-                frames.append(r_type)
-                # print(ip:", str(r_type[0]))
-                if not (str(r_type[0]) == "GxPtr32"):
-                    break
+        for i, frame in enumerate(self.bt.frames):
+            print("frame", frame, hex(frame.ip))
+            r_type = RefinePType(Type("Ptr32", 4), frame.ip, process, mm)
+            frames.append(r_type)
+            # print(ip:", str(r_type[0]))
+            if not (str(r_type[0]) == "GxPtr32"):
+                break
 
         self.bt.frames = frames
         self.eip_type = RefinePType(
-            Type("Ptr32", 4), process.getInstrPointer(), process, mm)
+            Type(ptr, bytes), process.getInstrPointer(), process, mm)
 
     def __str__(self):
         return "Crash@" + hex(self.eip_type[1]) + ":" + str(self.eip_type[0])

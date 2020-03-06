@@ -29,41 +29,44 @@ def FindModule(value, mm):
 
 def RefinePType(ptype, value, process, mm):
 
-    if value is None:
-        return (Type("Top32", 4), value)
+    architecture = "32" if "32" in str(ptype) else "64"
+    bytes = 4 if architecture == "32" else 8
 
-    if str(ptype) == "Ptr32":
+    if value is None:
+        return (Type("Top" + architecture, bytes), value)
+
+    if ("Ptr" in str(ptype)):
         ptr = value
         if ptr == 0x0:
-            return (Type("NPtr32", 4), ptr)
+            return (Type("NPtr" + architecture, bytes), ptr)
         else:
 
             try:
-                _ = process.readBytes(ptr, 4)
+                _ = process.readBytes(ptr, 4) if architecture == "32" else process.readBytes(ptr, 8)
             except PtraceError:
-                return (Type("DPtr32", 4), ptr)
+                return (Type("DPtr" + architecture, bytes), ptr)
 
             mm.checkPtr(ptr)
             if mm.isStackPtr(ptr):
-                return (Type("SPtr32", 4), ptr)
+                return (Type("SPtr" + architecture, bytes), ptr)
             elif mm.isHeapPtr(ptr):
-                return (Type("HPtr32", 4), ptr)
+                return (Type("HPtr" + architecture, bytes), ptr)
             elif mm.isCodePtr(ptr):
-                return (Type("GxPtr32", 4), ptr)
+                return (Type("GxPtr" + architecture, bytes), ptr)
             elif mm.isFilePtr(ptr):
-                return (Type("FPtr32", 4), ptr)
+                return (Type("FPtr" + architecture, bytes), ptr)
             elif mm.isGlobalPtr(ptr):
-                return (Type("GPtr32", 4), ptr)
+                return (Type("GPtr" + architecture, bytes), ptr)
             else:
-                return (Type("Ptr32", 4), ptr)
+                return (Type("Ptr" + architecture, bytes), ptr)
 
-    elif str(ptype) == "Num32":
+    elif "Num" in str(ptype):
         num = value
         if num == 0x0:
-            return (Type("Num32B0", 4), num)
+            return (Type("Num" + architecture + "B0", bytes), num)
         else:
             binlen = len(bin(num)) - 2
             binlen = int(ceil(binlen / 8.0)) * 8
-            return (Type("Num32B" + str(binlen), 4), num)
+            return (Type("Num" + architecture + "B" + str(binlen), bytes), num)
 
-    return (Type("Top32", 4), value)
+    return (Type("Top" + architecture, 8), value)

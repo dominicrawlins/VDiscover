@@ -105,7 +105,7 @@ def GetArgs():
 
                     break
 
-    r.sort()
+    r = sorted(r, key=lambda x: x.i)
     for i in range(len(r)):
         if r[i].i != i + 1:
             r = r[0:i]

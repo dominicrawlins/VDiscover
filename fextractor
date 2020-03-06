@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     if open("/proc/sys/kernel/randomize_va_space").read().strip() != "0":
         print("Address space layout randomization (ASLR) is enabled, disable it before continue to use the cache")
-        print("Hint: # echo 0 > /proc/sys/kernel/randomize_va_space")
+        print("Hint: # sudo bash -c \"echo 0 > /proc/sys/kernel/randomize_va_space\"")
         sys.exit(-1)
 
     # Arguments
@@ -158,9 +158,12 @@ if __name__ == "__main__":
 
     csvfile = options.out_file
 
+    if(testcase in os.listdir(os.path.join(os.path.dirname(__file__), "../../examples/testcases/"))):
+        os.chdir(os.path.join(os.path.dirname(__file__), "../../examples/testcases/", testcase))
+        program = GetCmd(None)
+    else:
+        program = testcase
 
-    os.chdir(os.path.join(os.path.dirname(__file__), "../../examples/testcases/", testcase))
-    program = GetCmd(None)
 
     if static_only:
 

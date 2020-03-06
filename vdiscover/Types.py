@@ -18,6 +18,7 @@ Copyright 2014 by G.Grieco
 """
 
 import copy
+from ptrace.cpu_info import (CPU_POWERPC, CPU_INTEL, CPU_X86_64, CPU_I386)
 
 
 class Type:
@@ -50,15 +51,31 @@ ptypes = [Type("Num32", 4, None),
           Type("NPtr32", 4, None),  # NULL pointer
           Type("DPtr32", 4, None),  # Dangling pointer
           Type("GPtr32", 4, None),  # Global pointer
-          Type("Top32", 4, None)
+          Type("Top32", 4, None),
+          Type("Num64", 8, None),
+          Type("Ptr64", 8, None),  # Generic pointer
+          Type("SPtr64", 8, None),  # Stack pointer
+          Type("HPtr64", 8, None),  # Heap pointer
+          Type("GxPtr64", 8, None),  # Global eXecutable pointer
+          Type("FPtr64", 8, None),  # File pointer
+          Type("NPtr64", 8, None),  # NULL pointer
+          Type("DPtr64", 8, None),  # Dangling pointer
+          Type("GPtr64", 8, None),  # Global pointer
+          Type("Top64", 8, None)
           ]
 
-for i in range(0, 33, 8):
-    ptypes.append(Type("Num32B" + str(i), 4, None))
+ptypes += list(map(lambda x : Type("Num32B" + str(x), 4, None), list(range(0,33,8))))
+ptypes += list(map(lambda x : Type("Num64B" + str(x), 8, None), list(range(0,65,8))))
 
-num32_ptypes = filter(lambda t: "Num32" in str(t), ptypes)
-ptr32_ptypes = ptypes[1:9]
-generic_ptypes = [Type("Top32", 4, None)]
+
+
+num32_ptypes = list(filter(lambda t: "Num32" in str(t), ptypes))
+ptr32_ptypes = list(filter(lambda t: "Ptr32" in str(t), ptypes))
+generic32_ptypes = [Type("Top32", 4, None)]
+
+num64_ptypes = list(filter(lambda t: "Num64" in str(t), ptypes))
+ptr64_ptypes = list(filter(lambda t: "Ptr64" in str(t), ptypes))
+generic64_ptypes = [Type("Top64", 8, None)]
 
 
 def isNum(ptype):
@@ -79,6 +96,15 @@ def isNull(val):
 
 def GetPtype(ptype):
 
+    if CPU_X86_64:
+        if isPtr(ptype):
+            return Type("Ptr64", 8)
+        elif isNum(ptype):
+            return Type("Num64", 8)
+        elif isVoid(ptype):
+            return Type("Top64", 8)
+        else:
+            return Type("Top64", 8)
     if isPtr(ptype):
         return Type("Ptr32", 4)
     elif isNum(ptype):
