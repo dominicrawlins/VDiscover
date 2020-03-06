@@ -180,18 +180,12 @@ class Abort(Event):
         # print(self.bt, type(self.bt))
         frames = []
 
-        if CPU_X86_64:
-            # detection of stack frame disabled, python-ptrace does not support
-            # ...
-            pass
-        if CPU_I386:
+        for i, frame in enumerate(self.bt.frames):
+            r_type = RefinePType(Type("Ptr32", 4), frame.ip, process, mm)
+            frames.append(r_type)
 
-            for i, frame in enumerate(self.bt.frames):
-                r_type = RefinePType(Type("Ptr32", 4), frame.ip, process, mm)
-                frames.append(r_type)
-
-                if str(r_type[0]) == "DPtr32":
-                    break
+            if str(r_type[0]) == "DPtr32":
+                break
 
         self.bt.frames = frames
         # print("frames",frames)
@@ -240,19 +234,14 @@ class Crash(Event):
             self.bt = Backtrace()
         frames = []
 
-        if CPU_X86_64:
-            # detection of stack frame disabled, python-ptrace does not support
-            # ...
-            pass
-        if CPU_I386:
 
-            for i, frame in enumerate(self.bt.frames):
-                print("frame", frame, hex(frame.ip))
-                r_type = RefinePType(Type("Ptr32", 4), frame.ip, process, mm)
-                frames.append(r_type)
-                # print(ip:", str(r_type[0]))
-                if not (str(r_type[0]) == "GxPtr32"):
-                    break
+        for i, frame in enumerate(self.bt.frames):
+            print("frame", frame, hex(frame.ip))
+            r_type = RefinePType(Type("Ptr32", 4), frame.ip, process, mm)
+            frames.append(r_type)
+            # print(ip:", str(r_type[0]))
+            if not (str(r_type[0]) == "GxPtr32"):
+                break
 
         self.bt.frames = frames
         self.eip_type = RefinePType(
