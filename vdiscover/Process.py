@@ -201,6 +201,7 @@ class Process(Application):
 
         elif signal.signum == SIGABRT:
             self.crashed = True
+            self.mm = MemoryMaps(self.program, self.pid)
             return [
                 Signal(
                     "SIGABRT", self.process, self.mm), Abort(
