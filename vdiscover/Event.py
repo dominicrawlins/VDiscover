@@ -138,7 +138,7 @@ class Signal(Event):
     def GetTypedName(self):
 
         if len(self.fields) > 0:
-            ptypes = map(lambda x__: x__[0], self.fields.values())
+            ptypes = list(map(lambda x__: x__[0], self.fields.values()))
             return (str(self.name), ptypes)
         else:
             return (str(self.name), ["()"])
